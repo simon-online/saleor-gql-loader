@@ -114,8 +114,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["shopSettingsUpdate"]["shopErrors"]
-        handle_errors(errors)
+        handle_errors(response, 'data.shopSettingsUpdate.shopErrors')
 
         return response["data"]["shopSettingsUpdate"]["shop"]
 
@@ -160,8 +159,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["shopDomainUpdate"]["shopErrors"]
-        handle_errors(errors)
+        handle_errors(response, 'data.shopDomainUpdate.shopErrors')
 
         return response["data"]["shopSettingsUpdate"]["shop"]["domain"]
 
@@ -220,8 +218,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["shopAddressUpdate"]["shopErrors"]
-        handle_errors(errors)
+        handle_errors(response, 'data.shopAddressUpdate.shopErrors')
 
         return response["data"]["shopAddressUpdate"]["shop"]["companyAddress"]
 
@@ -245,11 +242,11 @@ class ETLDataLoader:
             when warehouseErrors is not an empty list
         """
         default_kwargs = {
-            "companyName": "The Fake Company",
             "email": "fake@example.com",
-            "name": "fake warehouse",
+            "name": "Fake Warehouse",
             "address": {
-                "streetAddress1": "a fake street adress",
+                "companyName": "The Fake Company",
+                "streetAddress1": "A Fake Street Address",
                 "city": "Fake City",
                 "postalCode": "1024",
                 "country": "CH"
@@ -280,8 +277,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["createWarehouse"]["warehouseErrors"]
-        handle_errors(errors)
+        handle_errors(response, 'data.createWarehouse.warehouseErrors')
 
         return response["data"]["createWarehouse"]["warehouse"]["id"]
 
@@ -337,8 +333,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["shippingZoneCreate"]["shippingErrors"]
-        handle_errors(errors)
+        handle_errors(response, 'data.shippingZoneCreate.shippingErrors')
 
         return response["data"]["shippingZoneCreate"]["shippingZone"]["id"]
 
@@ -391,8 +386,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["attributeCreate"]["productErrors"]
-        handle_errors(errors)
+        handle_errors(response, 'data.attributeCreate.productErrors')
 
         return response["data"]["attributeCreate"]["attribute"]["id"]
 
@@ -447,8 +441,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["attributeValueCreate"]["productErrors"]
-        handle_errors(errors)
+        handle_errors(response, 'data.attributeValueCreate.productErrors')
 
         return response["data"]["attributeValueCreate"]["attribute"]["id"]
 
@@ -504,8 +497,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["productTypeCreate"]["productErrors"]
-        handle_errors(errors)
+        handle_errors(response, 'data.productTypeCreate.productErrors')
 
         return response["data"]["productTypeCreate"]["productType"]["id"]
 
@@ -557,8 +549,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["categoryCreate"]["productErrors"]
-        handle_errors(errors)
+        handle_errors(response, 'data.categoryCreate.productErrors')
 
         return response["data"]["categoryCreate"]["category"]["id"]
 
@@ -616,8 +607,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["productCreate"]["productErrors"]
-        handle_errors(errors)
+        handle_errors(response, 'data.productCreate.productErrors')
 
         return response["data"]["productCreate"]["product"]["id"]
 
@@ -673,8 +663,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["productVariantCreate"]["productErrors"]
-        handle_errors(errors)
+        handle_errors(response, 'data.productVariantCreate.productErrors')
 
         return response["data"]["productVariantCreate"]["productVariant"]["id"]
 
@@ -703,8 +692,7 @@ class ETLDataLoader:
         response = graphql_multipart_request(
             body, self.headers, self.endpoint_url)
 
-        errors = response["data"]["productImageCreate"]["productErrors"]
-        handle_errors(errors)
+        handle_errors(response, 'data.productImageCreate.productErrors')
 
         return response["data"]["productImageCreate"]["image"]["id"]
 
@@ -747,8 +735,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["customerCreate"]["accountErrors"]
-        handle_errors(errors)
+        handle_errors(response, 'data.customerCreate.accountErrors')
 
         return response["data"]["customerCreate"]["user"]["id"]
 

@@ -123,23 +123,47 @@ def override_dict(a, overrides):
         a[key] = val
 
 
-def handle_errors(errors):
-    """Handle a list of errors as dict with keys message and field.
+def handle_errors(response, errors_path=None):
+    """Handle a list of generic and request specific errors.
 
     Parameters
     ----------
-    error : list
-        a list of errors each error must be a dict with at least the following
+    response : dict
+        the entire response dict
+    errors_path : str
+        a dot notation path to look for a request specific errors list
+        where each error must be a dict with at least the following
         keys: `field` and `message`
 
     Raises
     ------
     Exception
-        when the list is not empty and display {field} : {message} errors.
+        when the request specific errors list is not empty and display {field} : {message} errors
+        or generic errors list is not empty and display {message} errors
     """
-    if len(errors) > 0:
+    txt_list = None
+
+    if errors_path:
+        errors_path_found = True
+        path_target = response
+        path_fields = errors_path.split('.')
+
+        for field in path_fields:
+            if field in path_target and path_target[field]:
+                path_target = path_target[field]
+            else:
+                errors_path_found = False
+                break
+
+        if errors_path_found:
+            txt_list = [
+                "{field} : {message}".format(**error) for error in path_target if 'field' in error]
+
+    if not txt_list and 'errors' in response and response['errors']:
         txt_list = [
-            "{field} : {message}".format(**error) for error in errors]
+            error['message'] for error in response['errors'] if 'message' in error]
+
+    if txt_list:
         raise Exception("\n".join(txt_list))
 
 def get_operations(product_id):
