@@ -359,7 +359,8 @@ class ETLDataLoader:
         """
         default_kwargs = {
             "inputType": "DROPDOWN",
-            "name": "default"
+            "name": "default",
+            "type": "PRODUCT_TYPE"
         }
 
         override_dict(default_kwargs, kwargs)
@@ -374,7 +375,7 @@ class ETLDataLoader:
                     attribute {
                         id
                     }
-                    productErrors {
+                    attributeErrors {
                         field
                         message
                         code
@@ -386,7 +387,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, 'data.attributeCreate.productErrors')
+        handle_errors(response, 'data.attributeCreate.attributeErrors')
 
         return response["data"]["attributeCreate"]["attribute"]["id"]
 
