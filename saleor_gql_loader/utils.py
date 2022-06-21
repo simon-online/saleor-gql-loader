@@ -5,6 +5,7 @@ Notes
 The function defined here must be context and implementation independant, for
 easy reusability
 """
+import mimetypes
 import requests
 import json
 from pathlib import Path
@@ -130,7 +131,7 @@ def handle_errors(response, errors_path=None):
     ----------
     response : dict
         the entire response dict
-    errors_path : str
+    errors_path : tuple
         a dot notation path to look for a request specific errors list
         where each error must be a dict with at least the following
         keys: `field` and `message`
@@ -146,9 +147,8 @@ def handle_errors(response, errors_path=None):
     if errors_path:
         errors_path_found = True
         path_target = response
-        path_fields = errors_path.split('.')
 
-        for field in path_fields:
+        for field in errors_path:
             if field in path_target and path_target[field]:
                 path_target = path_target[field]
             else:
@@ -166,13 +166,15 @@ def handle_errors(response, errors_path=None):
     if txt_list:
         raise Exception("\n".join(txt_list))
 
-def get_operations(product_id):
-    """Get ProductImageCreate operations
+def get_operations(product_id, alt=''):
+    """Get ProductMediaCreate operations
 
     Parameters
     ----------
     product_id : str
-            id for which the product image will be created.
+        id for which the product image will be created
+    alt : str
+        alt description for the product image
 
     Returns
     -------
@@ -180,9 +182,9 @@ def get_operations(product_id):
     variables: dict
     """
     query = """
-        mutation ProductImageCreate($product: ID!, $image: Upload!, $alt: String) {
-            productImageCreate(input: {alt: $alt, image: $image, product: $product}) {
-                image{
+        mutation ProductMediaCreate($product: ID!, $image: Upload!, $alt: String) {
+            productMediaCreate(input: {alt: $alt, image: $image, product: $product}) {
+                media {
                     id
                 }
                 productErrors {
@@ -195,27 +197,32 @@ def get_operations(product_id):
     variables = {
         "product": product_id,
         "image": "0",
-        "alt": ''
+        "alt": alt
     }
     return {"query": query, "variables": variables}
 
-def get_payload(product_id, file_path):
-    """Get ProductImageCreate operations
+def get_payload(product_id, file_path, alt=''):
+    """Get ProductMediaCreate operations
 
     Parameters
     ----------
     product_id : str
-            id for which the product image will be created.
+        id for which the product media will be created
+    alt : str
+        alt description for the product image
 
     Returns
     -------
     query : str
     variables: dict
     """
+
+    mime_type, encoding = mimetypes.guess_type(file_path)
+
     return {
         "operations": json.dumps(
-            get_operations(product_id), cls=DjangoJSONEncoder
+            get_operations(product_id, alt), cls=DjangoJSONEncoder
         ),
         "map": json.dumps({'0': ["variables.image"]}, cls=DjangoJSONEncoder),
-        "0": (Path(file_path).name, open(file_path, 'rb'), 'image/png')
+        "0": (Path(file_path).name, open(file_path, 'rb'), mime_type)
     }

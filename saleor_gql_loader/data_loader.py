@@ -52,18 +52,62 @@ class ETLDataLoader:
 
     """
 
-    def __init__(self, auth_token, endpoint_url="http://localhost:8000/graphql/"):
+    def __init__(self, auth_token=None, email=None, password=None, endpoint_url="http://localhost:8000/graphql/"):
         """initialize the `DataLoader` with an auth_token and an url endpoint.
 
         Parameters
         ----------
         auth_token : str
             token used to identify called to the graphQL endpoint.
+        email : str
+            email to authenticate with
+        password : str
+            password to authenticate with
         endpoint_url : str, optional
             the graphQL endpoint to be used , by default "http://localhost:8000/graphql/"
         """
-        self.headers = {"Authorization": "Bearer {}".format(auth_token)}
+        self.email = None
+        self.password = None
+        self.headers = {}
         self.endpoint_url = endpoint_url
+
+        if email and password:
+            self.authenticate(email, password)
+        elif auth_token:
+            self.set_auth_header(auth_token)
+
+    def set_auth_header(self, auth_token):
+        if auth_token:
+            self.headers["Authorization"] = "Bearer {}".format(auth_token)
+        else:
+            raise Exception('Authentication failed - check details are correct')
+
+    def authenticate(self, email=None, password=None):
+        if email:
+            self.email = email
+
+        if password:
+            self.password = password
+
+        variables = {
+            "email": self.email,
+            "password": self.password
+        }
+
+        query = """
+            mutation createToken($email: String!, $password: String!) {
+                tokenCreate(email: $email, password: $password) {
+                    token
+                }
+            }
+        """
+
+        response = graphql_request(
+            query, variables, self.headers, self.endpoint_url)
+
+        handle_errors(response)
+
+        self.set_auth_header(response["data"]["tokenCreate"]["token"])
 
     def update_shop_settings(self, **kwargs):
         """update shop settings.
@@ -114,7 +158,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, 'data.shopSettingsUpdate.shopErrors')
+        handle_errors(response, ('data', 'shopSettingsUpdate', 'shopErrors'))
 
         return response["data"]["shopSettingsUpdate"]["shop"]
 
@@ -159,7 +203,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, 'data.shopDomainUpdate.shopErrors')
+        handle_errors(response, ('data', 'shopDomainUpdate', 'shopErrors'))
 
         return response["data"]["shopSettingsUpdate"]["shop"]["domain"]
 
@@ -218,7 +262,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, 'data.shopAddressUpdate.shopErrors')
+        handle_errors(response, ('data', 'shopAddressUpdate', 'shopErrors'))
 
         return response["data"]["shopAddressUpdate"]["shop"]["companyAddress"]
 
@@ -277,7 +321,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, 'data.createWarehouse.warehouseErrors')
+        handle_errors(response, ('data', 'createWarehouse', 'warehouseErrors'))
 
         return response["data"]["createWarehouse"]["warehouse"]["id"]
 
@@ -333,7 +377,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, 'data.shippingZoneCreate.shippingErrors')
+        handle_errors(response, ('data', 'shippingZoneCreate', 'shippingErrors'))
 
         return response["data"]["shippingZoneCreate"]["shippingZone"]["id"]
 
@@ -387,7 +431,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, 'data.attributeCreate.attributeErrors')
+        handle_errors(response, ('data', 'attributeCreate', 'attributeErrors'))
 
         return response["data"]["attributeCreate"]["attribute"]["id"]
 
@@ -442,7 +486,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, 'data.attributeValueCreate.productErrors')
+        handle_errors(response, ('data', 'attributeValueCreate', 'productErrors'))
 
         return response["data"]["attributeValueCreate"]["attribute"]["id"]
 
@@ -498,7 +542,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, 'data.productTypeCreate.productErrors')
+        handle_errors(response, ('data', 'productTypeCreate', 'productErrors'))
 
         return response["data"]["productTypeCreate"]["productType"]["id"]
 
@@ -550,7 +594,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, 'data.categoryCreate.productErrors')
+        handle_errors(response, ('data', 'categoryCreate', 'productErrors'))
 
         return response["data"]["categoryCreate"]["category"]["id"]
 
@@ -608,7 +652,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, 'data.productCreate.productErrors')
+        handle_errors(response, ('data', 'productCreate', 'productErrors'))
 
         return response["data"]["productCreate"]["product"]["id"]
 
@@ -664,12 +708,12 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, 'data.productVariantCreate.productErrors')
+        handle_errors(response, ('data', 'productVariantCreate', 'productErrors'))
 
         return response["data"]["productVariantCreate"]["productVariant"]["id"]
 
-    def create_product_image(self, product_id, file_path):
-        """create a product image.
+    def create_product_media(self, product_id, file_path=None, file_url=None, alt=''):
+        """create a product media.
 
         Parameters
         ----------
@@ -677,6 +721,10 @@ class ETLDataLoader:
             id for which the product image will be created.
         file_path : str
             path to the image to upload.
+        file_url : str
+            url to the media file to add
+        alt : str
+            alt description for the media
 
         Returns
         -------
@@ -688,14 +736,44 @@ class ETLDataLoader:
         Exception
             when productErrors is not an empty list.
         """
-        body = get_payload(product_id, file_path)
+        if file_path:
+            body = get_payload(product_id, file_path, alt)
 
-        response = graphql_multipart_request(
-            body, self.headers, self.endpoint_url)
+            response = graphql_multipart_request(
+                body, self.headers, self.endpoint_url)
+        else:
+            kwargs = {
+                "product": product_id,
+                "mediaUrl": file_url
+            }
 
-        handle_errors(response, 'data.productImageCreate.productErrors')
+            if alt:
+                kwargs["alt"] = alt
 
-        return response["data"]["productImageCreate"]["image"]["id"]
+            variables = {
+                "input": kwargs
+            }
+
+            query = """
+                mutation createProductMedia($input: ProductMediaCreateInput!) {
+                    productMediaCreate(input: $input) {
+                        media {
+                            id
+                        }
+                        productErrors {
+                            field
+                            message
+                        }
+                    }
+                }
+            """
+
+            response = graphql_request(
+                query, variables, self.headers, self.endpoint_url)
+
+        handle_errors(response, ('data', 'productMediaCreate', 'productErrors'))
+
+        return response["data"]["productMediaCreate"]["media"]["id"]
 
     def create_customer_account(self, **kwargs):
         """
@@ -736,7 +814,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, 'data.customerCreate.accountErrors')
+        handle_errors(response, ('data', 'customerCreate', 'accountErrors'))
 
         return response["data"]["customerCreate"]["user"]["id"]
 
