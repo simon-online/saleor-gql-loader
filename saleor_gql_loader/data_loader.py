@@ -818,6 +818,157 @@ class ETLDataLoader:
 
         return response["data"]["customerCreate"]["user"]["id"]
 
+    def update_product_channel_listings(self, product_id, input_data):
+        """update a product channel listings.
+        Use this to set product and variant channel availability.
+
+        Parameters
+        ----------
+        product_id : str
+             product id to update channel availability.
+        input_data : dict
+            the product and variant channel availability data.
+
+        Returns
+        -------
+        id : str
+            the id of the updated product.
+
+        Raises
+        ------
+        Exception
+            when productChannelListingErrors is not an empty list.
+        """
+
+        variables = {
+            "id": product_id,
+            "input": input_data
+        }
+
+        query = """
+            mutation updateProductChannelListings($id: ID!, $input: ProductChannelListingUpdateInput!) {
+                productChannelListingUpdate(id: $id, input: $input) {
+                    product {
+                        id
+                    }
+                    productChannelListingErrors {
+                        field
+                        message
+                        code
+                    }
+                }
+            }
+        """
+
+        response = graphql_request(
+            query, variables, self.headers, self.endpoint_url)
+
+        handle_errors(response, ('data', 'productChannelListingUpdate', 'productChannelListingErrors'))
+
+        return response["data"]["productChannelListingUpdate"]["product"]["id"]
+
+    def update_product_variant_channel_listings(self, product_variant_id, input_list):
+        """update a product variant channel listings.
+        Use to set product variant prices for each channel including for simple products which just have
+        one product variant.
+
+        Parameters
+        ----------
+        product_variant_id : str
+             product variant id for price updates.
+        input_list : list
+            all the channel pricing details for a product variant. refer
+            to the ProductVariantChannelListingAddInput graphQL type for more details.
+
+        Returns
+        -------
+        id : str
+            the id of the updated product variant.
+
+        Raises
+        ------
+        Exception
+            when productChannelListingErrors is not an empty list.
+        """
+
+        variables = {
+            "id": product_variant_id,
+            "input": input_list
+        }
+
+        query = """
+            mutation updateProductVariantChannelListings($id: ID!, $input: [ProductVariantChannelListingAddInput!]!) {
+                productVariantChannelListingUpdate(id: $id, input: $input) {
+                    variant {
+                        id
+                    }
+                    productChannelListingErrors {
+                        field
+                        message
+                        code
+                    }
+                }
+            }
+        """
+
+        response = graphql_request(
+            query, variables, self.headers, self.endpoint_url)
+
+        handle_errors(response, ('data', 'productVariantChannelListingUpdate', 'productChannelListingErrors'))
+
+        return response["data"]["productVariantChannelListingUpdate"]["variant"]["id"]
+
+    def update_product_variant_stocks(self, product_variant_id, stocks):
+        """update the stock levels for a product variant.
+        Use to set warehouse stock levels for a product variant including for simple products which just have
+        one product variant.
+
+        Parameters
+        ----------
+        product_variant_id : str
+             product variant id for stock updates.
+        stocks : list
+            all the channel stock details for a product variant. refer
+            to the StockInput graphQL type for more details.
+
+        Returns
+        -------
+        id : str
+            the id of the updated product variant.
+
+        Raises
+        ------
+        Exception
+            when bulkStockErrors is not an empty list.
+        """
+
+        variables = {
+            "variantId": product_variant_id,
+            "stocks": stocks
+        }
+
+        query = """
+            mutation updateProductVariantStocks($variantId: ID!, $stocks: [StockInput!]!) {
+                productVariantStocksUpdate(variantId: $variantId, stocks: $stocks) {
+                    productVariant {
+                        id
+                    }
+                    bulkStockErrors {
+                        field
+                        message
+                        code
+                    }
+                }
+            }
+        """
+
+        response = graphql_request(
+            query, variables, self.headers, self.endpoint_url)
+
+        handle_errors(response, ('data', 'productVariantStocksUpdate', 'bulkStockErrors'))
+
+        return response["data"]["productVariantStocksUpdate"]["productVariant"]["id"]
+
     def update_private_meta(self, item_id, input_list):
         """
 
