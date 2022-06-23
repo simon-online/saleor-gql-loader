@@ -266,6 +266,62 @@ class ETLDataLoader:
 
         return response["data"]["shopAddressUpdate"]["shop"]["companyAddress"]
 
+    def create_channel(self, **kwargs):
+        """create a channel.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            overrides the default value set to create the channel. Refer to the
+            ChannelCreateInput graphQL type to know what can be overriden.
+
+        Returns
+        -------
+        id : str
+            the id of the channel created
+
+        Raises
+        ------
+        Exception
+            when warehouseErrors is not an empty list
+        """
+        default_kwargs = {
+            "isActive": True,
+            "name": "Fake Channel",
+            "slug": "fake-channel",
+            "currencyCode": "USD",
+            "defaultCountry": "US",
+            "addShippingZones": []
+        }
+
+        override_dict(default_kwargs, kwargs)
+
+        variables = {
+            "input": default_kwargs
+        }
+
+        query = """
+            mutation createChannel($input: ChannelCreateInput!) {
+                channelCreate(input: $input) {
+                    channel {
+                        id
+                    }
+                    channelErrors {
+                        field
+                        message
+                        code
+                    }
+                }
+            }
+        """
+
+        response = graphql_request(
+            query, variables, self.headers, self.endpoint_url)
+
+        handle_errors(response, ('data', 'channelCreate', 'channelErrors'))
+
+        return response["data"]["channelCreate"]["channel"]["id"]
+
     def create_warehouse(self, **kwargs):
         """create a warehouse.
 
@@ -546,26 +602,29 @@ class ETLDataLoader:
 
         return response["data"]["productTypeCreate"]["productType"]["id"]
 
-    def create_category(self, **kwargs):
+    def create_category(self, parent_id, **kwargs):
         """create a category.
 
         Parameters
         ----------
+        parent_id : str
+            the parent product category id or empty if top level category
         **kwargs : dict, optional
             overrides the default value set to create the category refer to
-            the productTypeCreateInput graphQL type to know what can be
+            the CategoryInput graphQL type to know what can be
             overriden.
 
         Returns
         -------
         id : str
-            the id of the productType created.
+            the id of the product category created.
 
         Raises
         ------
         Exception
             when productErrors is not an empty list.
         """
+
         default_kwargs = {
             "name": "default"
         }
@@ -573,12 +632,13 @@ class ETLDataLoader:
         override_dict(default_kwargs, kwargs)
 
         variables = {
-            "input": default_kwargs
+            "input": default_kwargs,
+            "parent": parent_id
         }
 
         query = """
-            mutation createCategory($input: CategoryInput!) {
-                categoryCreate(input: $input) {
+            mutation createCategory($input: CategoryInput!, $parent: ID) {
+                categoryCreate(input: $input, parent: $parent) {
                     category {
                         id
                     }
