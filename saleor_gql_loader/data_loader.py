@@ -1070,3 +1070,110 @@ class ETLDataLoader:
             return item_id
         else:
             return None
+
+    def fetch_product_types(self):
+        product_types = []
+
+        variables = {
+            'after': ''
+        }
+        query = """
+        query FetchAllProductTypes($after: String) {
+            productTypes(filter: {kind: NORMAL}, first: 10, after: $after) {
+                pageInfo {
+                  hasNextPage,
+                  endCursor
+                }
+                edges {
+                    node {
+                        id,
+                        name,
+                        slug,
+                        productAttributes {
+                            id,
+                            name,
+                            slug
+                        }
+                        variantAttributes {
+                            id,
+                            name,
+                            slug
+                        }
+                    }
+                }
+            }
+        }
+        """
+
+        has_next_page = True
+
+        while has_next_page:
+            response = graphql_request(query, variables, self.headers, self.endpoint_url)
+
+            handle_errors(response)
+
+            types = response['data']['productTypes']
+
+            for edge in types['edges']:
+                product_types.append(edge['node'])
+
+            has_next_page = types['pageInfo']['hasNextPage']
+            variables['after'] = types['pageInfo']['endCursor']
+
+        return product_types
+
+    def fetch_product_categories(self):
+        product_categories = []
+
+        level = 0
+        variables = {
+            'level': level,
+            'after': ''
+        }
+        query = """
+        query FetchAllProductCategories($level: Int, $after: String) {
+            categories(level: $level, first: 10, after: $after) {
+                pageInfo {
+                  hasNextPage,
+                  endCursor
+                }
+                edges {
+                    node {
+                        id,
+                        name,
+                        slug
+                    }
+                }
+                totalCount
+            }
+        }
+        """
+
+        has_next_page = True
+
+        while has_next_page:
+            response = graphql_request(query, variables, self.headers, self.endpoint_url)
+
+            handle_errors(response)
+
+            categories = response['data']['categories']
+
+            if categories['totalCount']:
+                for edge in categories['edges']:
+                    product_categories.append(edge['node'])
+
+                has_next_page = categories['pageInfo']['hasNextPage']
+
+                if has_next_page:
+                    variables['after'] = categories['pageInfo']['endCursor']
+                else:
+                    level += 1
+                    variables = {
+                        'level': level,
+                        'after': ''
+                    }
+                    has_next_page = True
+            else:
+                has_next_page = False
+
+        return product_categories

@@ -159,9 +159,13 @@ def handle_errors(response, errors_path=None):
             txt_list = [
                 "{field} : {message}".format(**error) for error in path_target if 'field' in error]
 
-    if not txt_list and 'errors' in response and response['errors']:
-        txt_list = [
-            error['message'] for error in response['errors'] if 'message' in error]
+    if not txt_list:
+        if 'errors' in response and response['errors']:
+            txt_list = [
+                error['message'] for error in response['errors'] if 'message' in error]
+        elif 'error' in response and 'errors' in response['error'] and response['error']['errors']:
+            txt_list = [
+                error['message'] for error in response['error']['errors'] if 'message' in error]
 
     if txt_list:
         raise Exception("\n".join(txt_list))
