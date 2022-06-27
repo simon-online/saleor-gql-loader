@@ -682,10 +682,7 @@ class ETLDataLoader:
         """
         default_kwargs = {
             "name": "default",
-            "description": "default",
-            "productType": product_type_id,
-            "basePrice": 0.0,
-            "sku": "default"
+            "productType": product_type_id
         }
 
         override_dict(default_kwargs, kwargs)
