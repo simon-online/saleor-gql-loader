@@ -1068,6 +1068,47 @@ class ETLDataLoader:
         else:
             return None
 
+    def fetch_warehouses(self):
+        warehouses = []
+
+        variables = {
+            'after': ''
+        }
+        query = """
+        query FetchAllWarehouses($after: String) {
+            warehouses(first: 10, after: $after) {
+                pageInfo {
+                  hasNextPage,
+                  endCursor
+                }
+                edges {
+                    node {
+                        id,
+                        name,
+                        slug
+                    }
+                }
+            }
+        }
+        """
+
+        has_next_page = True
+
+        while has_next_page:
+            response = graphql_request(query, variables, self.headers, self.endpoint_url)
+
+            handle_errors(response)
+
+            warehouse_data = response['data']['warehouses']
+
+            for edge in warehouse_data['edges']:
+                warehouses.append(edge['node'])
+
+            has_next_page = warehouse_data['pageInfo']['hasNextPage']
+            variables['after'] = warehouse_data['pageInfo']['endCursor']
+
+        return warehouses
+
     def fetch_product_types(self):
         product_types = []
 
