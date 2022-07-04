@@ -1068,6 +1068,24 @@ class ETLDataLoader:
         else:
             return None
 
+    def fetch_channels(self):
+        variables = {}
+        query = """
+        query FetchAllChannels {
+            channels {
+                id,
+                name,
+                slug
+            }
+        }
+        """
+
+        response = graphql_request(query, variables, self.headers, self.endpoint_url)
+
+        handle_errors(response)
+
+        return response['data']['channels']
+
     def fetch_warehouses(self):
         warehouses = []
 
