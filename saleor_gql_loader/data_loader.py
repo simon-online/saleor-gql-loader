@@ -875,6 +875,55 @@ class ETLDataLoader:
 
         return response["data"]["customerCreate"]["user"]["id"]
 
+    def update_product(self, product_id, input_data):
+        """update a product.
+        Use this to set product fields and attributes.
+
+        Parameters
+        ----------
+        product_id : str
+            product id to update.
+        input_data : dict
+            the product fields and attributes data.
+
+        Returns
+        -------
+        id : str
+            the id of the updated product.
+
+        Raises
+        ------
+        Exception
+            when productErrors is not an empty list.
+        """
+
+        variables = {
+            "id": product_id,
+            "input": input_data
+        }
+
+        query = """
+            mutation updateProductChannelListings($id: ID!, $input: ProductInput!) {
+                productUpdate(id: $id, input: $input) {
+                    product {
+                        id
+                    }
+                    productErrors {
+                        field
+                        message
+                        code
+                    }
+                }
+            }
+        """
+
+        response = graphql_request(
+            query, variables, self.headers, self.endpoint_url)
+
+        handle_errors(response, ('data', 'productUpdate', 'productErrors'))
+
+        return response["data"]["productUpdate"]["product"]["id"]
+
     def update_product_channel_listings(self, product_id, input_data):
         """update a product channel listings.
         Use this to set product and variant channel availability.
@@ -1233,3 +1282,136 @@ class ETLDataLoader:
                 has_next_page = False
 
         return product_categories
+
+    def fetch_products(self, search=None):
+        products = []
+
+        filter_values = {}
+
+        if search:
+            filter_values['search'] = str(search)
+
+        variables = {
+            'filter': filter_values,
+            'after': ''
+        }
+
+        query = """
+        query FetchProducts($filter: ProductFilterInput, $after: String) {
+            products(filter: $filter, first: 100, after: $after) {
+                pageInfo {
+                  hasNextPage,
+                  endCursor
+                }
+                edges {
+                    node {
+                        id
+                        name
+                        slug
+                        description
+                        productType {
+                            slug
+                        }
+                        attributes {
+                            attribute {
+                                id
+                                slug
+                            }
+                            values {
+                                name
+                                slug
+                                inputType
+                                value
+                                richText
+                                plainText
+                                boolean
+                                date
+                                dateTime
+                            }
+                        }
+                        variants {
+                            sku
+                        }
+                    }
+                }
+            }
+        }
+        """
+
+        has_next_page = True
+
+        while has_next_page:
+            response = graphql_request(query, variables, self.headers, self.endpoint_url)
+
+            handle_errors(response)
+
+            data_products = response['data']['products']
+
+            for edge in data_products['edges']:
+                products.append(edge['node'])
+
+            has_next_page = data_products['pageInfo']['hasNextPage']
+            variables['after'] = data_products['pageInfo']['endCursor']
+
+        return products
+
+    def fetch_product_variant(self, id=None, sku=None):
+        variables = {
+            'id': '',
+            'sku': ''
+        }
+
+        if id:
+            variables['id'] = id
+
+        if sku:
+            variables['sku'] = sku
+
+        query = """
+        query FetchProductVariant($id: ID, $sku: String) {
+            productVariant(id: $id, sku: $sku) {
+                id
+                name
+                sku
+                product {
+                    id
+                    name
+                }
+            }
+        }
+        """
+
+        response = graphql_request(query, variables, self.headers, self.endpoint_url)
+
+        handle_errors(response)
+
+        return response['data']['productVariant']
+
+    def fetch_attribute(self, id=None, slug=None):
+        variables = {
+            'id': '',
+            'slug': ''
+        }
+
+        if id:
+            variables['id'] = id
+
+        if slug:
+            variables['slug'] = slug
+
+        query = """
+        query FetchAttribute($id: ID, $slug: String) {
+            attribute(id: $id, slug: $slug) {
+                id
+                name
+                slug
+                inputType
+            }
+        }
+        """
+
+        response = graphql_request(query, variables, self.headers, self.endpoint_url)
+
+        handle_errors(response)
+
+        return response['data']['attribute']
