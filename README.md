@@ -43,7 +43,7 @@ git clone https://github.com/simon-online/saleor-gql-loader.git
 ### prerequisities
 
 The first requirement is to have a running saleor installation with the latest
-version installed (2.10).
+version installed (v3.x).
 
 Before being able to use the package to create entities you need to create a
 saleor app with the necessary permissions to create the entities you need.
