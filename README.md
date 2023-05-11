@@ -20,7 +20,7 @@ As of now, `saleor-gql-loader` allows to create the following entities:
 and update the following entities:
 
 - [x] shop
-- [x] private meta
+- [x] metadata / private metadata
 
 PR for supporting more graphQL mutations and/or queries are more than welcome.
 
