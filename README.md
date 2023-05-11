@@ -32,16 +32,10 @@ team/community._
 
 ## installation
 
-using Pypi:
+Cloning the repo:
 
 ```bash
-pip install saleor-gql-loader
-```
-
-Or cloning the repo:
-
-```bash
-git clone https://github.com/grll/saleor-gql-loader.git
+git clone https://github.com/simon-online/saleor-gql-loader.git
 ```
 
 ## usage
