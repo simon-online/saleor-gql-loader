@@ -842,22 +842,18 @@ class ETLDataLoader:
 
         query = """
             query customerByEmail($email: String!) {
-                customers(first: 1, filter: { search: $email }) {
-                    edges {
-                        node {
-                            id
-                        }
-                    }
+                user(email: $email) {
+                    id
                 }
             }
         """
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "customers"))
-        if len(response["data"]["customers"]["edges"]) != 1:
+        handle_errors(response, ("data", "user"))
+        if not response["data"]["user"]:
             return None
-        return response["data"]["customers"]["edges"][0]["node"]["id"]
+        return response["data"]["user"]["id"]
 
     def delete_customer_account(self, customer_id):
         """

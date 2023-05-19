@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
     name='saleor-gql-loader',
     packages=['saleor_gql_loader'],
-    version='0.0.5',
+    version='0.0.6',
     license='MIT',
     description='A simple gql loader class to create some entities in Saleor',
     author='Guillaume Raille',
