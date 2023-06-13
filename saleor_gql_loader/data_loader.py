@@ -1,11 +1,11 @@
-"""Implements a data loader that load data into Saleor through graphQL.
+"""Implements a data loader that loads data into Saleor through graphQL.
 
 Notes
 -----
-This module is designed and working with Saleor 2.9. Update will be necessary
-for futur release if the data models changes.
+This module is designed and working with Saleor v3.14.0. Update will be necessary
+for future release if the data models change.
 
-No tests has been implemented as testing would need to create a fake db, which
+No tests have been implemented as testing would need to create a fake db, which
 requires a lot of dev better redo the project as a django app inside saleor
 project for easier testing.
 
@@ -129,7 +129,7 @@ class ETLDataLoader:
         Raises
         ------
         Exception
-            when shopErrors is not an empty list
+            when errors is not an empty list
         """
 
         variables = {"input": kwargs}
@@ -152,7 +152,7 @@ class ETLDataLoader:
                     defaultMailSenderAddress
                     customerSetPasswordUrl
                 }
-                shopErrors {
+                errors {
                     field
                     message
                     code
@@ -163,7 +163,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "shopSettingsUpdate", "shopErrors"))
+        handle_errors(response, ("data", "shopSettingsUpdate", "errors"))
 
         return response["data"]["shopSettingsUpdate"]["shop"]
 
@@ -176,10 +176,15 @@ class ETLDataLoader:
             overrides the default value set to update the shop domain refer to the
             SiteDomainInput graphQL type to know what can be overriden.
 
+        Returns
+        -------
+        domain : dict
+            the new shop domain
+
         Raises
         ------
         Exception
-            when shopErrors is not an empty list
+            when errors is not an empty list
         """
 
         variables = {"siteDomainInput": kwargs}
@@ -194,7 +199,7 @@ class ETLDataLoader:
                         url
                     }
                 }
-                shopErrors {
+                errors {
                     field
                     message
                     code
@@ -205,9 +210,9 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "shopDomainUpdate", "shopErrors"))
+        handle_errors(response, ("data", "shopDomainUpdate", "errors"))
 
-        return response["data"]["shopSettingsUpdate"]["shop"]["domain"]
+        return response["data"]["shopDomainUpdate"]["shop"]["domain"]
 
     def update_shop_address(self, **kwargs):
         """update shop address.
@@ -218,10 +223,15 @@ class ETLDataLoader:
             overrides the default value set to update the shop address refer to the
             AddressInput graphQL type to know what can be overriden.
 
+        Returns
+        -------
+        companyAddress : dict
+            the new shop address
+
         Raises
         ------
         Exception
-            when shopErrors is not an empty list
+            when errors is not an empty list
         """
 
         variables = {"addressInput": kwargs}
@@ -250,7 +260,7 @@ class ETLDataLoader:
                         isDefaultBillingAddress
                     }
                 }
-                shopErrors {
+                errors {
                     field
                     message
                     code
@@ -261,7 +271,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "shopAddressUpdate", "shopErrors"))
+        handle_errors(response, ("data", "shopAddressUpdate", "errors"))
 
         return response["data"]["shopAddressUpdate"]["shop"]["companyAddress"]
 
@@ -282,7 +292,7 @@ class ETLDataLoader:
         Raises
         ------
         Exception
-            when warehouseErrors is not an empty list
+            when errors is not an empty list
         """
         default_kwargs = {
             "isActive": True,
@@ -303,7 +313,7 @@ class ETLDataLoader:
                     channel {
                         id
                     }
-                    channelErrors {
+                    errors {
                         field
                         message
                         code
@@ -314,7 +324,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "channelCreate", "channelErrors"))
+        handle_errors(response, ("data", "channelCreate", "errors"))
 
         return response["data"]["channelCreate"]["channel"]["id"]
 
@@ -335,7 +345,7 @@ class ETLDataLoader:
         Raises
         ------
         Exception
-            when warehouseErrors is not an empty list
+            when errors is not an empty list
         """
         default_kwargs = {
             "email": "fake@example.com",
@@ -359,7 +369,7 @@ class ETLDataLoader:
                     warehouse {
                         id
                     }
-                    warehouseErrors {
+                    errors {
                         field
                         message
                         code
@@ -370,7 +380,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "createWarehouse", "warehouseErrors"))
+        handle_errors(response, ("data", "createWarehouse", "errors"))
 
         return response["data"]["createWarehouse"]["warehouse"]["id"]
 
@@ -392,7 +402,7 @@ class ETLDataLoader:
         Raises
         ------
         Exception
-            when shippingErrors is not an empty list.
+            when errors is not an empty list.
         """
         default_kwargs = {
             "name": "CH",
@@ -410,7 +420,7 @@ class ETLDataLoader:
                     shippingZone {
                         id
                     }
-                    shippingErrors {
+                    errors {
                         field
                         message
                         code
@@ -421,7 +431,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "shippingZoneCreate", "shippingErrors"))
+        handle_errors(response, ("data", "shippingZoneCreate", "errors"))
 
         return response["data"]["shippingZoneCreate"]["shippingZone"]["id"]
 
@@ -443,7 +453,7 @@ class ETLDataLoader:
         Raises
         ------
         Exception
-            when productErrors is not an empty list.
+            when errors is not an empty list.
         """
         default_kwargs = {
             "inputType": "DROPDOWN",
@@ -461,7 +471,7 @@ class ETLDataLoader:
                     attribute {
                         id
                     }
-                    attributeErrors {
+                    errors {
                         field
                         message
                         code
@@ -472,7 +482,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "attributeCreate", "attributeErrors"))
+        handle_errors(response, ("data", "attributeCreate", "errors"))
 
         return response["data"]["attributeCreate"]["attribute"]["id"]
 
@@ -496,7 +506,7 @@ class ETLDataLoader:
         Raises
         ------
         Exception
-            when productErrors is not an empty list.
+            when errors is not an empty list.
         """
         default_kwargs = {"name": "default"}
 
@@ -510,7 +520,7 @@ class ETLDataLoader:
                     attribute{
                         id
                     }
-                    productErrors {
+                    errors {
                         field
                         message
                         code
@@ -521,7 +531,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "attributeValueCreate", "productErrors"))
+        handle_errors(response, ("data", "attributeValueCreate", "errors"))
 
         return response["data"]["attributeValueCreate"]["attribute"]["id"]
 
@@ -543,7 +553,7 @@ class ETLDataLoader:
         Raises
         ------
         Exception
-            when productErrors is not an empty list.
+            when errors is not an empty list.
         """
         default_kwargs = {
             "name": "default",
@@ -563,7 +573,7 @@ class ETLDataLoader:
                     productType {
                         id
                     }
-                    productErrors {
+                    errors {
                         field
                         message
                         code
@@ -574,7 +584,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "productTypeCreate", "productErrors"))
+        handle_errors(response, ("data", "productTypeCreate", "errors"))
 
         return response["data"]["productTypeCreate"]["productType"]["id"]
 
@@ -598,7 +608,7 @@ class ETLDataLoader:
         Raises
         ------
         Exception
-            when productErrors is not an empty list.
+            when errors is not an empty list.
         """
 
         default_kwargs = {"name": "default"}
@@ -613,7 +623,7 @@ class ETLDataLoader:
                     category {
                         id
                     }
-                    productErrors {
+                    errors {
                         field
                         message
                         code
@@ -624,7 +634,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "categoryCreate", "productErrors"))
+        handle_errors(response, ("data", "categoryCreate", "errors"))
 
         return response["data"]["categoryCreate"]["category"]["id"]
 
@@ -648,7 +658,7 @@ class ETLDataLoader:
         Raises
         ------
         Exception
-            when productErrors is not an empty list.
+            when errors is not an empty list.
         """
         default_kwargs = {"name": "default", "productType": product_type_id}
 
@@ -662,7 +672,7 @@ class ETLDataLoader:
                     product {
                         id
                     }
-                    productErrors {
+                    errors {
                         field
                         message
                         code
@@ -673,7 +683,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "productCreate", "productErrors"))
+        handle_errors(response, ("data", "productCreate", "errors"))
 
         return response["data"]["productCreate"]["product"]["id"]
 
@@ -697,7 +707,7 @@ class ETLDataLoader:
         Raises
         ------
         Exception
-            when productErrors is not an empty list.
+            when errors is not an empty list.
         """
         default_kwargs = {"product": product_id, "sku": "0", "attributes": []}
 
@@ -711,7 +721,7 @@ class ETLDataLoader:
                     productVariant {
                         id
                     }
-                    productErrors {
+                    errors {
                         field
                         message
                         code
@@ -722,7 +732,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "productVariantCreate", "productErrors"))
+        handle_errors(response, ("data", "productVariantCreate", "errors"))
 
         return response["data"]["productVariantCreate"]["productVariant"]["id"]
 
@@ -748,7 +758,7 @@ class ETLDataLoader:
         Raises
         ------
         Exception
-            when productErrors is not an empty list.
+            when errors is not an empty list.
         """
         if file_path:
             body = get_payload(product_id, file_path, alt)
@@ -768,7 +778,7 @@ class ETLDataLoader:
                         media {
                             id
                         }
-                        productErrors {
+                        errors {
                             field
                             message
                         }
@@ -780,7 +790,7 @@ class ETLDataLoader:
                 query, variables, self.headers, self.endpoint_url
             )
 
-        handle_errors(response, ("data", "productMediaCreate", "productErrors"))
+        handle_errors(response, ("data", "productMediaCreate", "errors"))
 
         return response["data"]["productMediaCreate"]["media"]["id"]
 
@@ -812,7 +822,7 @@ class ETLDataLoader:
                     user {
                         id
                     }
-                    accountErrors {
+                    errors {
                         field
                         message
                         code
@@ -823,7 +833,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "customerCreate", "accountErrors"))
+        handle_errors(response, ("data", "customerCreate", "errors"))
 
         return response["data"]["customerCreate"]["user"]["id"]
 
@@ -864,7 +874,13 @@ class ETLDataLoader:
 
         Returns
         -------
+        id: str
+            the user id of the deleted customer
 
+        Raises
+        ------
+        Exception
+            when errors is not an empty list.
         """
         variables = {"id": customer_id}
 
@@ -874,7 +890,7 @@ class ETLDataLoader:
                     user {
                         id
                     }
-                    accountErrors {
+                    errors {
                         field
                         message
                         code
@@ -885,7 +901,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "customerDelete", "accountErrors"))
+        handle_errors(response, ("data", "customerDelete", "errors"))
 
         return response["data"]["customerDelete"]["user"]["id"]
 
@@ -908,7 +924,7 @@ class ETLDataLoader:
         Raises
         ------
         Exception
-            when productErrors is not an empty list.
+            when errors is not an empty list.
         """
 
         variables = {"id": product_id, "input": input_data}
@@ -919,7 +935,7 @@ class ETLDataLoader:
                     product {
                         id
                     }
-                    productErrors {
+                    errors {
                         field
                         message
                         code
@@ -930,7 +946,7 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
-        handle_errors(response, ("data", "productUpdate", "productErrors"))
+        handle_errors(response, ("data", "productUpdate", "errors"))
 
         return response["data"]["productUpdate"]["product"]["id"]
 
@@ -953,7 +969,7 @@ class ETLDataLoader:
         Raises
         ------
         Exception
-            when productChannelListingErrors is not an empty list.
+            when errors is not an empty list.
         """
 
         variables = {"id": product_id, "input": input_data}
@@ -964,7 +980,7 @@ class ETLDataLoader:
                     product {
                         id
                     }
-                    productChannelListingErrors {
+                    errors {
                         field
                         message
                         code
@@ -977,7 +993,7 @@ class ETLDataLoader:
 
         handle_errors(
             response,
-            ("data", "productChannelListingUpdate", "productChannelListingErrors"),
+            ("data", "productChannelListingUpdate", "errors"),
         )
 
         return response["data"]["productChannelListingUpdate"]["product"]["id"]
@@ -1003,7 +1019,7 @@ class ETLDataLoader:
         Raises
         ------
         Exception
-            when productChannelListingErrors is not an empty list.
+            when errors is not an empty list.
         """
 
         variables = {"id": product_variant_id, "input": input_list}
@@ -1014,7 +1030,7 @@ class ETLDataLoader:
                     variant {
                         id
                     }
-                    productChannelListingErrors {
+                    errors {
                         field
                         message
                         code
@@ -1030,7 +1046,7 @@ class ETLDataLoader:
             (
                 "data",
                 "productVariantChannelListingUpdate",
-                "productChannelListingErrors",
+                "errors",
             ),
         )
 
@@ -1057,7 +1073,7 @@ class ETLDataLoader:
         Raises
         ------
         Exception
-            when bulkStockErrors is not an empty list.
+            when errors is not an empty list.
         """
 
         variables = {"variantId": product_variant_id, "stocks": stocks}
@@ -1068,7 +1084,7 @@ class ETLDataLoader:
                     productVariant {
                         id
                     }
-                    bulkStockErrors {
+                    errors {
                         field
                         message
                         code
@@ -1080,7 +1096,7 @@ class ETLDataLoader:
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
         handle_errors(
-            response, ("data", "productVariantStocksUpdate", "bulkStockErrors")
+            response, ("data", "productVariantStocksUpdate", "errors")
         )
 
         return response["data"]["productVariantStocksUpdate"]["productVariant"]["id"]
@@ -1107,7 +1123,7 @@ class ETLDataLoader:
                                     value
                                 }
                             }
-                            metadataErrors {
+                            errors {
                                 field
                                 message
                                 code
@@ -1117,6 +1133,9 @@ class ETLDataLoader:
                 """
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
+
+        handle_errors(response, ("data", "updateMetadata", "errors"))
+
         if len(response["data"]["updateMetadata"]["item"]["metadata"]) > 0:
             return item_id
         else:
@@ -1129,9 +1148,10 @@ class ETLDataLoader:
         ----------
         item_id: ID of the item to update. Model need to work with private metadata
         input_list: an input dict to which to set the private meta
+
         Returns
         -------
-
+        Item ID if successful, None if not
         """
 
         variables = {"id": item_id, "input": input_list}
@@ -1156,6 +1176,8 @@ class ETLDataLoader:
 
         response = graphql_request(query, variables, self.headers, self.endpoint_url)
 
+        handle_errors(response, ("data", "updatePrivateMetadata", "errors"))
+
         if (
             len(response["data"]["updatePrivateMetadata"]["item"]["privateMetadata"])
             > 0
@@ -1163,6 +1185,45 @@ class ETLDataLoader:
             return item_id
         else:
             return None
+
+    def update_plugin(self, plugin_id, channel_id=None, **kwargs):
+
+        variables = {"id": plugin_id, "channel": channel_id, "input": kwargs}
+
+        query = """
+                    mutation PluginUpdate($channel: ID, $id: ID!, $input: PluginUpdateInput!) {
+                        pluginUpdate(channelId: $channel, id: $id, input: $input) {
+                            plugin {
+                                id
+                                name
+                                channelConfigurations {
+                                    active
+                                    channel {
+                                        id
+                                        slug
+                                        name
+                                    }
+                                    configuration {
+                                        name
+                                        value
+                                        type
+                                    }
+                                }
+                            }
+                            errors {
+                                field
+                                message
+                                code
+                            }
+                        }
+                    }
+                """
+
+        response = graphql_request(query, variables, self.headers, self.endpoint_url)
+
+        handle_errors(response, ("data", "pluginUpdate", "errors"))
+
+        return response["data"]["pluginUpdate"]["plugin"]
 
     def fetch_channels(self):
         variables = {}

@@ -21,6 +21,7 @@ and update the following entities:
 
 - [x] shop
 - [x] metadata / private metadata
+- [x] plugin
 
 PR for supporting more graphQL mutations and/or queries are more than welcome.
 
