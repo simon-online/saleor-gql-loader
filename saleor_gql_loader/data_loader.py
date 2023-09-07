@@ -885,7 +885,7 @@ class ETLDataLoader:
         variables = {"id": customer_id}
 
         query = """
-            mutation customerDelete($id: ID!) {
+            mutation CustomerDelete($id: ID!) {
                 customerDelete(id: $id) {
                     user {
                         id
@@ -904,6 +904,44 @@ class ETLDataLoader:
         handle_errors(response, ("data", "customerDelete", "errors"))
 
         return response["data"]["customerDelete"]["user"]["id"]
+
+    def delete_customer_accounts(self, customer_ids):
+        """
+        Deletes multiple customers (as an admin)
+        Parameters
+        ----------
+        customer_ids: list
+
+        Returns
+        -------
+        count: int
+            the count of deleted customers
+
+        Raises
+        ------
+        Exception
+            when errors is not an empty list.
+        """
+        variables = {'ids': customer_ids}
+
+        query = """
+            mutation CustomersDelete($ids: [ID!]!) {
+                customerBulkDelete(ids: $ids) {
+                    count
+                    errors {
+                        field
+                        message
+                        code
+                    }
+                }
+            }
+        """
+
+        response = graphql_request(query, variables, self.headers, self.endpoint_url)
+
+        handle_errors(response, ("data", "customerBulkDelete", "errors"))
+
+        return response["data"]["customerBulkDelete"]["count"]
 
     def update_product(self, product_id, input_data):
         """update a product.
@@ -1486,6 +1524,57 @@ class ETLDataLoader:
         handle_errors(response)
 
         return response["data"]["productVariant"]
+
+    def fetch_customers(self, search=None):
+        customers = []
+
+        filter_values = {}
+
+        if search:
+            filter_values['search'] = str(search)
+
+        variables = {'filter': filter_values, 'after': ''}
+
+        query = """
+        query FetchCustomers($filter: CustomerFilterInput, $after: String) {
+            customers(filter: $filter, first: 100, after: $after) {
+                pageInfo {
+                  hasNextPage,
+                  endCursor
+                }
+                edges {
+                    node {
+                        id
+                        email
+                        firstName
+                        lastName
+                        isStaff
+                        isActive
+                        isConfirmed
+                    }
+                }
+            }
+        }
+        """
+
+        has_next_page = True
+
+        while has_next_page:
+            response = graphql_request(
+                query, variables, self.headers, self.endpoint_url
+            )
+
+            handle_errors(response)
+
+            data_products = response['data']['customers']
+
+            for edge in data_products['edges']:
+                customers.append(edge['node'])
+
+            has_next_page = data_products['pageInfo']['hasNextPage']
+            variables['after'] = data_products['pageInfo']['endCursor']
+
+        return customers
 
     def fetch_attribute(self, id=None, slug=None):
         variables = {"id": "", "slug": ""}
