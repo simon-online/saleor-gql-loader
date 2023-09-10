@@ -20,6 +20,7 @@ As of now, `saleor-gql-loader` allows to create the following entities:
 and update the following entities:
 
 - [x] shop
+- [x] collection
 - [x] metadata / private metadata
 - [x] plugin
 

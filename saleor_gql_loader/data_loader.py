@@ -1139,6 +1139,42 @@ class ETLDataLoader:
 
         return response["data"]["productVariantStocksUpdate"]["productVariant"]["id"]
 
+    def add_products_to_collection(self, collection_id, product_ids):
+        """add products to a collection
+
+        Parameters
+        ----------
+        :param collection_id: str
+        :param product_ids: list
+
+        Returns
+        -------
+        :return: result: object
+        """
+
+        variables = {'collectionId': collection_id, 'products': product_ids}
+
+        query = """
+            mutation AddProductsToCollection($collectionId: ID!, $products: [ID!]!) {
+                collectionAddProducts(collectionId: $collectionId, products: $products) {
+                    collection {
+                        id
+                    }
+                    errors {
+                        field
+                        message
+                        code
+                    }
+                }
+            }
+        """
+
+        response = graphql_request(query, variables, self.headers, self.endpoint_url)
+
+        handle_errors(response, ('data', 'collectionAddProducts', 'errors'))
+
+        return response['data']['collectionAddProducts']['collection']['id']
+
     def update_public_meta(self, item_id, input_list):
         """
         Parameters
@@ -1524,6 +1560,31 @@ class ETLDataLoader:
         handle_errors(response)
 
         return response["data"]["productVariant"]
+
+    def fetch_collection(self, id=None, slug=None):
+        variables = {'id': '', 'slug': ''}
+
+        if id:
+            variables['id'] = id
+
+        if slug:
+            variables['slug'] = slug
+
+        query = """
+        query FetchCollection($id: ID, $slug: String) {
+            collection(id: $id, slug: $slug) {
+                id
+                name
+                slug
+            }
+        }
+        """
+
+        response = graphql_request(query, variables, self.headers, self.endpoint_url)
+
+        handle_errors(response)
+
+        return response['data']['collection']
 
     def fetch_customers(self, search=None):
         customers = []
