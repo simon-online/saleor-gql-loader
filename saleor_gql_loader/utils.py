@@ -5,6 +5,7 @@ Notes
 The function defined here must be context and implementation independant, for
 easy reusability
 """
+import time
 import mimetypes
 import requests
 import json
@@ -13,7 +14,8 @@ from requests_toolbelt import MultipartEncoder
 from django.core.serializers.json import DjangoJSONEncoder
 
 GQL_DEFAULT_ENDPOINT = "http://localhost:8000/graphql/"
-
+REQUEST_RETRIES = 6
+REQUEST_RETRY_DELAY = 10
 
 def graphql_request(query, variables={}, headers={},
                     endpoint=GQL_DEFAULT_ENDPOINT):
@@ -42,16 +44,35 @@ def graphql_request(query, variables={}, headers={},
     Exception
         when `response.status_code` is not 200.
     """
-    response = requests.post(
-        endpoint,
-        headers=headers,
-        json={
-            'query': query,
-            'variables': variables
-        }
-    )
+    attempt_count = 0
 
-    parsed_response = json.loads(response.text)
+    while attempt_count < REQUEST_RETRIES:
+        attempt_count += 1
+
+        response = requests.post(
+            endpoint,
+            headers=headers,
+            json={
+                'query': query,
+                'variables': variables
+            }
+        )
+
+        try:
+            parsed_response = json.loads(response.text)
+            break
+        except json.JSONDecodeError:
+            print(
+                'graphql_request: JSONDecodeError failure {attempt_count}/{max_retries}'.format(
+                    attempt_count=attempt_count, max_retries=REQUEST_RETRIES
+                )
+            )
+            print(response.text)
+            if attempt_count < REQUEST_RETRIES:
+                time.sleep(REQUEST_RETRY_DELAY * attempt_count)
+            else:
+                raise json.JSONDecodeError
+
     if response.status_code != 200:
         raise Exception("{message}\n extensions: {extensions}".format(
             **parsed_response["errors"][0]))
@@ -88,9 +109,28 @@ def graphql_multipart_request(body, headers, endpoint=GQL_DEFAULT_ENDPOINT):
     }
     override_dict(base_headers, headers)
 
-    response = requests.post(endpoint, data=bodyEncoder, headers=base_headers, timeout=90)
+    attempt_count = 0
 
-    parsed_response = json.loads(response.text)
+    while attempt_count < REQUEST_RETRIES:
+        attempt_count += 1
+
+        response = requests.post(endpoint, data=bodyEncoder, headers=base_headers, timeout=90)
+
+        try:
+            parsed_response = json.loads(response.text)
+            break
+        except json.JSONDecodeError:
+            print(
+                'graphql_multipart_request: JSONDecodeError failure {attempt_count}/{max_retries}'.format(
+                    attempt_count=attempt_count, max_retries=REQUEST_RETRIES
+                )
+            )
+            print(response.text)
+            if attempt_count < REQUEST_RETRIES:
+                time.sleep(REQUEST_RETRY_DELAY * attempt_count)
+            else:
+                raise json.JSONDecodeError
+
     if response.status_code != 200:
         raise Exception("{message}\n extensions: {extensions}".format(
             **parsed_response["errors"][0]))
