@@ -49,29 +49,29 @@ def graphql_request(query, variables={}, headers={},
     while attempt_count < REQUEST_RETRIES:
         attempt_count += 1
 
-        response = requests.post(
-            endpoint,
-            headers=headers,
-            json={
-                'query': query,
-                'variables': variables
-            }
-        )
-
         try:
+            response = requests.post(
+                endpoint,
+                headers=headers,
+                json={
+                    'query': query,
+                    'variables': variables
+                }
+            )
+
             parsed_response = json.loads(response.text)
             break
-        except json.JSONDecodeError:
+        except Exception as e:
             print(
-                'graphql_request: JSONDecodeError failure {attempt_count}/{max_retries}'.format(
-                    attempt_count=attempt_count, max_retries=REQUEST_RETRIES
+                'graphql_request: {exception} {attempt_count}/{max_retries}'.format(
+                    exception=e, attempt_count=attempt_count, max_retries=REQUEST_RETRIES
                 )
             )
             print(response.text)
             if attempt_count < REQUEST_RETRIES:
                 time.sleep(REQUEST_RETRY_DELAY * attempt_count)
             else:
-                raise json.JSONDecodeError
+                raise e
 
     if response.status_code != 200:
         raise Exception("{message}\n extensions: {extensions}".format(
@@ -114,22 +114,22 @@ def graphql_multipart_request(body, headers, endpoint=GQL_DEFAULT_ENDPOINT):
     while attempt_count < REQUEST_RETRIES:
         attempt_count += 1
 
-        response = requests.post(endpoint, data=bodyEncoder, headers=base_headers, timeout=90)
-
         try:
+            response = requests.post(endpoint, data=bodyEncoder, headers=base_headers, timeout=90)
+
             parsed_response = json.loads(response.text)
             break
-        except json.JSONDecodeError:
+        except Exception as e:
             print(
-                'graphql_multipart_request: JSONDecodeError failure {attempt_count}/{max_retries}'.format(
-                    attempt_count=attempt_count, max_retries=REQUEST_RETRIES
+                'graphql_multipart_request: {exception} {attempt_count}/{max_retries}'.format(
+                    exception=e, attempt_count=attempt_count, max_retries=REQUEST_RETRIES
                 )
             )
             print(response.text)
             if attempt_count < REQUEST_RETRIES:
                 time.sleep(REQUEST_RETRY_DELAY * attempt_count)
             else:
-                raise json.JSONDecodeError
+                raise e
 
     if response.status_code != 200:
         raise Exception("{message}\n extensions: {extensions}".format(
