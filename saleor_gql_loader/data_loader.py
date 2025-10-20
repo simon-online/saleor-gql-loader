@@ -1094,7 +1094,7 @@ class ETLDataLoader:
 
         return response["data"]["productVariantChannelListingUpdate"]["variant"]["id"]
 
-    def update_product_variant_stocks(self, product_variant_id, stocks):
+    def update_product_variant_stocks(self, product_variant_id, sku, stocks):
         """update the stock levels for a product variant.
         Use to set warehouse stock levels for a product variant including for simple products which just have
         one product variant.
@@ -1103,6 +1103,8 @@ class ETLDataLoader:
         ----------
         product_variant_id : str
              product variant id for stock updates.
+        sku : str
+            product sku for stock updates.
         stocks : list
             all the channel stock details for a product variant. refer
             to the StockInput graphQL type for more details.
@@ -1118,11 +1120,16 @@ class ETLDataLoader:
             when errors is not an empty list.
         """
 
-        variables = {"variantId": product_variant_id, "stocks": stocks}
+        variables = {"stocks": stocks}
+
+        if product_variant_id:
+            variables['variantId'] = product_variant_id
+        elif sku:
+            variables['sku'] = sku
 
         query = """
-            mutation updateProductVariantStocks($variantId: ID!, $stocks: [StockInput!]!) {
-                productVariantStocksUpdate(variantId: $variantId, stocks: $stocks) {
+            mutation updateProductVariantStocks($variantId: ID, $sku: String, $stocks: [StockInput!]!) {
+                productVariantStocksUpdate(variantId: $variantId, sku: $sku, stocks: $stocks) {
                     productVariant {
                         id
                     }
