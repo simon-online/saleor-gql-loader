@@ -1472,10 +1472,13 @@ class ETLDataLoader:
 
         return product_categories
 
-    def fetch_products(self, search=None):
+    def fetch_products(self, categories=None, search=None):
         products = []
 
         filter_values = {}
+
+        if categories:
+            filter_values["categories"] = categories
 
         if search:
             filter_values["search"] = str(search)
